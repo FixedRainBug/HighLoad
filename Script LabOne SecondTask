@@ -1,0 +1,27 @@
+import pyodbc
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+def transactor(conn,k):
+    cursor = conn.cursor()
+    query = "INSERT INTO LabOne(ID ,Text) VALUES (" + str(k) +", 'Post "+str(k)+"')"
+    cursor.execute(query)
+    conn.commit()
+    cursor.close()
+
+    
+try:
+    conn = pyodbc.connect('Driver={SQL Server};'
+                      'Server=DESKTOP-HTRQOGP\SQLEXPRESS;'
+                      'Database=HardLoadTasks;'
+                      'Trusted_Connection=yes;')
+    conn.autocommit = False
+    listval = list(i for i in range(20))
+    starttime = time.time()
+    for j in range (0,100000,20):
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            transaction = [pool.submit(transactor(conn, j+i)) for i in listval]
+    conn.close()
+    print (time.time() - starttime)
+except Exception as e:
+    print (e)
